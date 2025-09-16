@@ -15,48 +15,69 @@ struct ContentView: View {
             span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
     )
    )
-    @State private var locations = [Location]()
-    @State private var selectedPlace: Location?
-    
-    
+    @State private var viewModel = ViewModel()
+   
     var body: some View {
-        MapReader { proxy in
-            Map(initialPosition: startPosition) {
-                ForEach(locations) { location in
-                    Annotation(location.name, coordinate: location.coordinate) {
-                        Image(systemName: "star.circle")
-                            .resizable()
-                            .foregroundStyle(.red)
-                            .frame(width: 44, height: 44)
-                            .background(.white)
-                            .clipShape(.circle)
-//                            .onLongPressGesture {
-//                                selectedPlace = location
-//                            }
-                            .simultaneousGesture(LongPressGesture(minimumDuration: 0.5)
-                                .onEnded{ _ in
-                                    selectedPlace = location
+        NavigationStack {
+            if viewModel.isUnlocked {
+                ZStack {
+                    MapReader { proxy in
+                        Map(initialPosition: startPosition) {
+                            ForEach(viewModel.locations) { location in
+                                Annotation(location.name, coordinate: location.coordinate) {
+                                    Image(systemName: "star.circle")
+                                        .resizable()
+                                        .foregroundStyle(.red)
+                                        .frame(width: 44, height: 44)
+                                        .background(.white)
+                                        .clipShape(.circle)
+                                    //                            .onLongPressGesture {
+                                    //                                selectedPlace = location
+                                    //                            }
+                                        .simultaneousGesture(LongPressGesture(minimumDuration: 0.5)
+                                            .onEnded{ _ in
+                                                viewModel.selectedPlace = location
+                                            }
+                                        )
+                                    
                                 }
-                            )
+                                
+                            }
+                        }
+                        
+//                        .mapStyle(viewModel.mapStyle == .standard ? .standard : .hybrid)
+                        .mapStyle(viewModel.mapStyle == .standard ? .standard : .hybrid)
+                        .onTapGesture { position in // показывает всего лишь координаты экрана
+                            if let coordinate = proxy.convert(position, from: .local) {
+                                viewModel.addLocation(at: coordinate)
+                                
+                            }
+                        }
+                        
+                        .sheet(item: $viewModel.selectedPlace) { place in
+                            EditView(location: place) {
+                                viewModel.update(location: $0)
+                            }
+                        }
                         
                     }
-                    
                 }
-            }
-            .onTapGesture { position in // показывает всего лишь координаты экрана
-                if let coordinate = proxy.convert(position, from: .local) {
-                    let newLocation = Location(id: UUID(), name: "New location", description: "", latitude: coordinate.latitude, longitude: coordinate.longitude)
-                    locations.append(newLocation)
-                    
-                }
-            }
-            
-            .sheet(item: $selectedPlace) { place in
-                EditView(location: place) { newLocation in
-                    if let index = locations.firstIndex(of: place) {
-                        locations[index] = newLocation
+                . toolbar {
+                    Menu("Map Mode", systemImage: "globe") {
+                        Picker("Map Style", selection: $viewModel.mapStyle) {
+                            Text("Standart Map")
+                                .tag(ViewModel.MapStyle.standard)
+                            Text("Hybrid Map")
+                                .tag(ViewModel.MapStyle.hybrid)
+                        }
                     }
                 }
+            }else {
+                Button("Unlock Place", action: viewModel.authenticate)
+                    .padding()
+                    .background(.blue)
+                    .foregroundStyle(.white)
+                    .clipShape(.capsule)
             }
         }
     }
