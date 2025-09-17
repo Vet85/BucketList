@@ -5,10 +5,11 @@
 //  Created by Vitaliy Novichenko on 10.09.2025.
 //
 
-import CoreLocation
+//import CoreLocation
 import Foundation
 import LocalAuthentication
 import MapKit
+import SwiftUI
 
 extension ContentView {
 @Observable
@@ -24,6 +25,14 @@ extension ContentView {
         }
         var mapStyle: MapStyle = .standard
         
+        var authenticateError: String? = "Unknown error"
+     //   var alertMessage = ""
+        var isShowingAuthenticateError = false
+        
+//        enum AuthError: Error, LocalizedError {
+//            case biometricsNotAvailable, biometricsNotEnrolled, biometricsLockout, authenticationFailed, userCancel, userFallback, unknown
+//            
+//            }
         
         
         init() {
@@ -69,11 +78,14 @@ extension ContentView {
                     if success {
                         self.isUnlocked = true
                     } else {
-                        // error
+                        self.isShowingAuthenticateError = true
+                        self.authenticateError = "Ошибка аутентификации, попробуйте еще раз."
+                    
                     }
                 }
             } else {
-                // no biometric
+                self.isShowingAuthenticateError = true
+                self.authenticateError = String("\(error?.localizedDescription)")
             }
         }
     }

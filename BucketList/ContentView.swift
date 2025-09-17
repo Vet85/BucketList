@@ -71,15 +71,22 @@ struct ContentView: View {
                                 .tag(ViewModel.MapStyle.hybrid)
                         }
                     }
+                    Button("OK Ok Ok") { }
                 }
+                
             }else {
                 Button("Unlock Place", action: viewModel.authenticate)
                     .padding()
                     .background(.blue)
                     .foregroundStyle(.white)
                     .clipShape(.capsule)
+                    .alert("Ошибка аутентификации", isPresented: $viewModel.isShowingAuthenticateError) {
+                        Button("OK", role: .cancel) {  }
+                    }
             }
+                
         }
+        
     }
 }
 
